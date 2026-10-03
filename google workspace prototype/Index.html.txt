@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8"/>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+
+<title><?= examTitle ?> | Doctor Proctor</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"/>
+
+<style>
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+
+    --bg:#f0f4f8;--surface:#ffffff;--surface2:#f8fafc;--border:#e2e8f0;
+
+    --text:#1a202c;--muted:#718096;--accent:#3b82f6;--accent-soft:rgba(59,130,246,0.08);
+
+    --success:#16a34a;--danger:#dc2626;--warn:#d97706;--radius:10px;
+
+    --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+
+    --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+
+    --shadow-md:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.05);
+
+  }
+
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);}
+
+  /* ── TOPBAR ── */
+
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;box-shadow:var(--shadow);}
+
+  #app-brand{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding-right:12px;border-right:1px solid var(--border);color:#102a43;font-size:13px;font-weight:800;letter-spacing:-0.2px;}
+
+  #app-brand .brand-accent{color:var(--accent);}
+
+  .brand-mark{width:29px;height:32px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,var(--accent),#0f766e);border-radius:8px 8px 10px 10px;clip-path:polygon(50% 0,94% 15%,88% 72%,50% 100%,12% 72%,6% 15%);box-shadow:0 5px 12px rgba(59,130,246,.2);}
+
+  .brand-mark svg{width:17px;height:17px;}
+
+  #exam-name{flex:1;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  #timer-pill{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:15px;font-weight:700;letter-spacing:2px;font-variant-numeric:tabular-nums;transition:all 0.3s;min-width:90px;justify-content:center;color:var(--text);}
+
+  #timer-pill.warn {border-color:var(--warn);color:var(--warn);background:#fffbeb;}
+
+  #timer-pill.danger{border-color:var(--danger);color:var(--danger);background:#fef2f2;animation:blink 1s infinite;}
+
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.5}}
+
+  #progress-bar-wrap{position:fixed;top:56px;left:0;right:0;z-index:99;height:3px;background:var(--border);}
+
+  #progress-bar{height:100%;background:var(--accent);width:0%;transition:width 0.4s;}
+
+  /* ── SCREENS ── */
+
+  .screen{display:none;min-height:100vh;padding:80px 16px 40px;}
+
+  .screen.active{display:flex;flex-direction:column;align-items:center;}
+
+  /* ── NO EXAM ── */
+
+  #no-exam-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 32px;max-width:440px;width:100%;margin:auto;text-align:center;box-shadow:var(--shadow-md);}
+
+  #no-exam-card .icon{font-size:56px;margin-bottom:20px;}
+
+  #no-exam-card h1{font-size:20px;font-weight:700;margin-bottom:10px;color:var(--text);}
+
+  #no-exam-card p{font-size:14px;color:var(--muted);line-height:1.7;}
+
+  /* ── START ── */
+
+  #start-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;max-width:520px;width:100%;margin:auto;text-align:center;box-shadow:var(--shadow-md);}
+
+  #start-card .icon{font-size:48px;margin-bottom:16px;}
+
+  #start-card h1{font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text);}
+
+  #start-card .sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6;}
+
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+
+  .info-cell{background:var(--surface2);border-radius:var(--radius);padding:14px;text-align:center;border:1px solid var(--border);}
+
+  .info-cell .val{font-size:22px;font-weight:700;color:var(--accent);}
+
+  .info-cell .lbl{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
+
+  .name-row{margin-bottom:20px;text-align:left;}
+
+  .name-row label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px;font-weight:600;}
+
+  .name-row input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;color:var(--text);font-size:15px;outline:none;transition:border-color 0.15s;}
+
+  .name-row input:focus{border-color:var(--accent);background:#fff;}
+
+  .name-row input.error{border-color:var(--danger);}
+
+  .rules-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:16px;font-size:13px;color:#166534;text-align:left;margin-bottom:24px;line-height:1.8;}
+
+  .rules-box .rules-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#16a34a;margin-bottom:10px;}
+
+  .rules-box ul{padding-left:18px;}
+
+  .rules-box li{margin-bottom:4px;}
+
+  .btn-primary{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:15px;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 4px rgba(59,130,246,0.25);}
+
+  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
+
+  .portal-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;color:var(--muted);font-size:12px;font-weight:650;text-decoration:none;padding:8px 10px;border-radius:8px;transition:all .15s;}
+
+  .portal-back:hover{color:var(--accent);background:var(--accent-soft);}
+
+  .result-home{display:inline-flex;margin-top:22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 16px;color:var(--text);font-size:13px;font-weight:650;text-decoration:none;box-shadow:var(--shadow);}
+
+  .result-home:hover{border-color:var(--accent);color:var(--accent);}
+
+  @media (max-width:520px){
+    #topbar{padding:0 10px;gap:9px;}
+    #app-brand{padding-right:8px;}
+    #app-brand .brand-text{display:none;}
+    #exam-name{font-size:12px;}
+    #timer-pill{min-width:82px;padding:6px 10px;font-size:14px;}
+  }
+
+  /* ── QUIZ ── */
+
+  #quiz-wrap{max-width:680px;width:100%;margin:0 auto;}
+
+  .part-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:6px;}
+
+  .q-counter{font-size:13px;color:var(--muted);margin-bottom:16px;}
+
+  .q-text{font-size:16px;line-height:1.65;font-weight:500;margin-bottom:24px;color:var(--text);}
+
+  .options{display:flex;flex-direction:column;gap:10px;margin-bottom:32px;}
+
+  .opt{display:flex;align-items:flex-start;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:all 0.15s;user-select:none;box-shadow:var(--shadow);}
+
+  .opt:hover{border-color:var(--accent);background:#eff6ff;}
+
+  .opt.selected{border-color:var(--accent);background:#eff6ff;box-shadow:0 0 0 3px rgba(59,130,246,0.12);}
+
+  .opt-letter{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);transition:all 0.15s;}
+
+  .opt.selected .opt-letter{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .opt-text{font-size:14px;line-height:1.5;padding-top:4px;color:var(--text);}
+
+  .blank-wrap{margin-bottom:32px;}
+
+  .blank-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;font-size:15px;color:var(--text);outline:none;transition:all 0.15s;box-shadow:var(--shadow);font-family:var(--font);}
+
+  .blank-input:focus{border-color:var(--accent);background:#eff6ff;box-shadow:0 0 0 3px rgba(59,130,246,0.12);}
+
+  .blank-hint{font-size:12px;color:var(--muted);margin-top:8px;}
+
+  .nav-row{display:flex;gap:10px;}
+
+  .btn-nav{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.15s;box-shadow:var(--shadow);}
+
+  .btn-nav:hover{background:var(--surface2);}
+
+  .btn-nav.next{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 4px rgba(59,130,246,0.25);}
+
+  .btn-nav.next:hover{opacity:0.9;}
+
+  .btn-nav:disabled{opacity:0.4;cursor:not-allowed;}
+
+ 
+
+  /* ── R CODING STYLES ── */
+
+  .r-output {
+
+    background: #1e1e1e;
+
+    color: #00ff00;
+
+    padding: 12px;
+
+    border-radius: 8px;
+
+    font-family: monospace;
+
+    font-size: 13px;
+
+    white-space: pre-wrap;
+
+    min-height: 60px;
+
+    max-height: 200px;
+
+    overflow-y: auto;
+
+    margin-top: 10px;
+
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+
+  }
+
+  .code-editor {
+
+    width: 100%;
+
+    background: #f8f9fa;
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 14px;
+
+    font-family: monospace;
+
+    font-size: 14px;
+
+    min-height: 150px;
+
+    resize: vertical;
+
+    box-shadow: var(--shadow);
+
+  }
+
+  .code-editor:focus {
+
+    border-color: var(--accent);
+
+    outline: none;
+
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+
+  }
+
+  .btn-run {
+
+    background: #10b981;
+
+    color: white;
+
+    border: none;
+
+    border-radius: 6px;
+
+    padding: 8px 16px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    margin-top: 10px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+  }
+
+  .btn-run:hover { opacity: 0.9; }
+
+  .btn-run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .CodeMirror{border:1px solid var(--border);border-radius:6px;height:240px;font-size:14px;box-shadow:var(--shadow);}
+  .r-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .r-status{font-size:12px;color:var(--muted);margin-left:auto;}
+  .r-plots{display:grid;gap:12px;margin-top:12px;}
+  .r-plot{display:block;width:100%;max-width:650px;height:auto;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);}
+  .dataset-note,.test-results{margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);font-size:12px;}
+  .test-pass{color:var(--success)}.test-fail{color:var(--danger)}
+
+ 
+
+  /* ── FULLSCREEN WARNING ── */
+
+  #fs-warning{display:none;position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px);}
+
+  #fs-warning.show{display:flex;}
+
+  #fs-card{background:var(--surface);border:2px solid var(--warn);border-radius:16px;max-width:360px;width:100%;padding:32px 24px;text-align:center;box-shadow:var(--shadow-md);}
+
+  #fs-card h2{color:var(--warn);margin-bottom:10px;font-size:18px;}
+
+  #fs-card p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px;}
+
+  #fs-ring{position:relative;width:72px;height:72px;margin:0 auto 12px;}
+
+  #fs-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--warn);}
+
+  .btn-fs{width:100%;background:var(--warn);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
+
+  /* ── TIMEOUT ── */
+
+  #timeout-notice{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px);}
+
+  #timeout-notice.show{display:flex;}
+
+  #timeout-card{background:var(--surface);border:2px solid var(--warn);border-radius:16px;max-width:360px;width:100%;padding:32px 24px;text-align:center;box-shadow:var(--shadow-md);}
+
+  #timeout-card h2{color:var(--warn);margin-bottom:10px;}
+
+  #timeout-card p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:24px;}
+
+  .btn-submit-now{width:100%;background:var(--warn);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
+
+  /* ── ADMIN KILL MODAL ── */
+
+  #admin-kill-notice{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);}
+
+  #admin-kill-notice.show{display:flex;}
+
+  #admin-kill-card{background:var(--surface);border:2px solid var(--danger);border-radius:16px;max-width:400px;width:100%;padding:32px 24px;text-align:center;box-shadow:var(--shadow-md);}
+
+  #admin-kill-card h2{color:var(--danger);margin-bottom:10px;font-size:20px;}
+
+  #admin-kill-card p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:20px;}
+
+  #admin-kill-timer{font-size:36px;font-weight:800;color:var(--danger);margin-bottom:16px;}
+
+  .btn-kill-submit{width:100%;background:var(--danger);color:#fff;border:none;border-radius:var(--radius);padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
+
+  /* ── RESULTS ── */
+
+  #result-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 24px;max-width:580px;width:100%;margin:auto;text-align:center;box-shadow:var(--shadow-md);}
+
+  #result-card h2{font-size:22px;margin-bottom:6px;color:var(--text);}
+
+  .result-sub{font-size:14px;color:var(--muted);margin-bottom:28px;}
+
+  .score-circle{width:120px;height:120px;border-radius:50%;border:4px solid var(--accent);margin:0 auto 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+
+  .score-circle .pct{font-size:30px;font-weight:800;color:var(--accent);}
+
+  .score-circle .lbl{font-size:12px;color:var(--muted);}
+
+  .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+
+  .result-cell{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center;}
+
+  .result-cell .rv{font-size:20px;font-weight:700;}
+
+  .result-cell .rl{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  .review-list{text-align:left;margin-top:24px;border-top:1px solid var(--border);padding-top:20px;}
+
+  .review-item{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+
+  .review-item:last-child{border-bottom:none;}
+
+  .review-q{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;}
+
+  .review-q span{color:var(--text);}
+
+  .review-your{font-size:13px;margin-bottom:4px;}
+
+  .review-your.correct{color:var(--success);font-weight:600;}
+
+  .review-your.wrong{color:var(--danger);font-weight:600;}
+
+  .review-ans{font-size:13px;color:var(--success);}
+
+ 
+
+  /* ── COPY-PASTE BLOCK VISUAL FEEDBACK ── */
+
+  @keyframes shake {
+
+    0%, 100% { transform: translateX(0); }
+
+    20% { transform: translateX(-4px); }
+
+    40% { transform: translateX(4px); }
+
+    60% { transform: translateX(-4px); }
+
+    80% { transform: translateX(4px); }
+
+  }
+
+  .copy-blocked {
+
+    animation: shake 0.3s ease;
+
+    position: relative;
+
+  }
+
+  .copy-blocked::after {
+
+    content: "⛔ Copying disabled during exam";
+
+    position: absolute;
+
+    top: -30px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    background: var(--danger);
+
+    color: #fff;
+
+    padding: 4px 12px;
+
+    border-radius: 6px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    animation: toastIn 0.2s ease forwards, toastOut 0.2s ease 1.5s forwards;
+
+    z-index: 10000;
+
+  }
+
+  @keyframes toastIn { to { opacity: 1; top: -36px; } }
+
+  @keyframes toastOut { to { opacity: 0; top: -40px; } }
+
+  .screenshot-blur {
+
+    filter: blur(20px) !important;
+
+    pointer-events: none;
+
+  }
+
+
+
+  /* ═══════════════════════════════════════════════════════════
+     STUDENT EXPERIENCE REVISION — Doctor Proctor
+     Reliability UI, mobile safe areas, accessibility, branding
+     ═══════════════════════════════════════════════════════════ */
+  :root{
+    --bg:#f5f7f5;--surface:#ffffff;--surface2:#f8faf9;--border:#dfe7e3;
+    --text:#16211c;--muted:#65736c;--accent:#147d62;--accent-soft:rgba(20,125,98,.09);
+    --success:#16834f;--danger:#c93636;--warn:#b86b08;--radius:10px;
+    --font:'Inter','Segoe UI Variable','Segoe UI',system-ui,sans-serif;
+    --display:'Manrope','Inter','Segoe UI Variable',system-ui,sans-serif;
+    --shadow:0 1px 2px rgba(16,35,26,.05),0 5px 16px rgba(16,35,26,.035);
+    --shadow-md:0 16px 38px rgba(16,35,26,.10);
+  }
+  html,body{min-height:100%;height:auto;background:var(--bg);font-family:var(--font);}
+  body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+  button,input,textarea{font:inherit;}
+  button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,.CodeMirror.CodeMirror-focused{outline:3px solid rgba(20,125,98,.18);outline-offset:2px;}
+  #topbar{top:0;height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));box-shadow:none;}
+  #app-brand{font-family:var(--display);font-size:14px;color:var(--text);}
+  .brand-mark{width:34px;height:34px;color:var(--accent);background:var(--accent-soft);border:1px solid rgba(20,125,98,.22);border-radius:10px;clip-path:none;box-shadow:none;}
+  .brand-mark svg{width:19px;height:19px;}
+  #exam-name{font-size:12px;}
+  #timer-pill{border-radius:9px;letter-spacing:.5px;min-width:96px;background:var(--surface2);}
+  #progress-bar-wrap{top:calc(58px + env(safe-area-inset-top));}
+  .screen{padding:calc(86px + env(safe-area-inset-top)) 18px calc(42px + env(safe-area-inset-bottom));}
+  #start-card,#no-exam-card,#result-card{border-radius:14px;box-shadow:var(--shadow);}
+  #start-card{max-width:600px;padding:30px;}
+  #start-card .icon{display:none;}
+  #start-card h1{font-family:var(--display);font-size:25px;letter-spacing:-.5px;margin-bottom:5px;}
+  #start-card .sub{font-size:14px;margin-bottom:22px;}
+  .info-grid{grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:24px;}
+  .info-cell{padding:13px 10px;}
+  .info-cell .val{font-family:var(--display);font-size:19px;color:var(--text);}
+  .info-cell .lbl{font-size:10px;letter-spacing:.7px;}
+  .name-row label{color:var(--text);}
+  .name-row input,.blank-input{font-size:16px;background:var(--surface);min-height:48px;}
+  .name-row input:focus,.blank-input:focus{background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft);}
+  .rules-box{background:var(--surface2);border-color:var(--border);color:var(--muted);line-height:1.65;padding:17px 18px;}
+  .rules-box .rules-title{color:var(--text);font-family:var(--display);font-size:13px;text-transform:none;letter-spacing:0;}
+  .rules-box li::marker{color:var(--accent);}
+  .btn-primary{background:var(--accent);box-shadow:0 5px 14px rgba(20,125,98,.18);min-height:50px;}
+  #quiz-wrap{max-width:760px;}
+  .part-label{font-size:10px;letter-spacing:1.2px;margin-bottom:5px;}
+  .question-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .q-counter{margin:0;font-size:12px;}
+  .q-text{font-family:var(--display);font-size:18px;line-height:1.55;font-weight:600;margin-bottom:22px;}
+  .opt{width:100%;min-height:58px;text-align:left;font-family:var(--font);color:var(--text);appearance:none;-webkit-appearance:none;}
+  .opt:hover,.opt.selected{border-color:var(--accent);background:var(--accent-soft);}
+  .opt.selected{box-shadow:0 0 0 3px rgba(20,125,98,.10);}
+  .opt.multi .opt-letter{border-radius:7px;}
+  .opt-text{font-size:14px;}
+  .nav-row{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:70;margin-top:18px;padding:10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.95);box-shadow:0 12px 30px rgba(16,35,26,.12);backdrop-filter:blur(12px);}
+  .btn-nav{min-height:46px;}
+  .btn-nav.next{background:var(--accent);border-color:var(--accent);box-shadow:none;}
+  .save-status{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:10px 2px -6px;color:var(--muted);font-size:11px;min-height:18px;}
+  .save-status.saved::before{content:'✓';color:var(--success);font-weight:800;}
+  .r-workspace{margin-top:4px;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:14px;}
+  .r-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;}
+  .r-workspace-title{font-family:var(--display);font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--text);}
+  .CodeMirror{height:260px;border-radius:9px;font-size:14px;}
+  .btn-run{background:var(--accent);border-radius:8px;min-height:42px;padding:8px 15px;}
+  .r-output{background:#111a16;color:#d9fbe8;border-radius:9px;box-shadow:none;}
+  .dataset-note,.test-results{border-radius:8px;}
+  .test-results{color:var(--muted);}
+  .r-progress{font-size:12px;color:var(--muted);margin-left:auto;}
+  #result-card h2{font-family:var(--display);}
+  .result-grid{grid-template-columns:repeat(3,1fr);}
+  .result-cell .rv{font-family:var(--display);}
+  .blocking-overlay{display:none;position:fixed;inset:0;z-index:10020;background:rgba(5,14,10,.55);align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px);}
+  .blocking-overlay.show{display:flex;}
+  .recovery-card{width:min(430px,100%);background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:var(--shadow-md);}
+  .recovery-card h2{font-family:var(--display);font-size:20px;margin-bottom:7px;}
+  .recovery-card p{font-size:13px;color:var(--muted);line-height:1.6;}
+  .recovery-summary{margin:18px 0;padding:13px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-size:13px;}
+  .recovery-card .btn-primary{margin-top:4px;}
+  #fs-warning,#timeout-notice,#admin-kill-notice{padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+  #fs-card,#timeout-card,#admin-kill-card{border-width:1px;}
+  @media (pointer:coarse){
+    .btn-primary,.btn-nav,.btn-run,.portal-back,.result-home{min-height:44px;}
+    .opt{min-height:58px;}
+  }
+  @media (max-width:600px){
+    #topbar{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));gap:8px;}
+    #app-brand{padding-right:8px;border-right:0;}
+    #app-brand .brand-text{display:none;}
+    #exam-name{font-size:11px;}
+    #timer-pill{min-width:84px;padding:6px 8px;font-size:13px;}
+    .screen{padding-left:12px;padding-right:12px;padding-bottom:calc(28px + env(safe-area-inset-bottom));}
+    #start-card{padding:22px 17px;margin-top:8px;}
+    #start-card h1{font-size:21px;}
+    .info-grid{grid-template-columns:repeat(3,1fr);}
+    .info-cell{padding:11px 5px;}.info-cell .val{font-size:16px;}.info-cell .lbl{font-size:9px;}
+    .rules-box{font-size:12px;}
+    .q-text{font-size:17px;}
+    .options{margin-bottom:18px;}
+    .nav-row{bottom:max(6px,env(safe-area-inset-bottom));}
+    .CodeMirror{height:230px;}
+    .r-workspace{padding:10px;}
+    .result-grid{gap:7px;}.result-cell{padding:12px 6px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}
+  }
+
+</style>
+
+</head>
+
+<body>
+
+<div id="topbar">
+
+  <div id="app-brand" aria-label="Doctor Proctor">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v5a4 4 0 0 0 8 0V4"/><path d="M6 4h4M14 4h4M12 13v2a4 4 0 0 0 4 4h1"/><circle cx="19" cy="19" r="2"/></svg></span>
+    <span class="brand-text">Doctor <span class="brand-accent">Proctor</span></span>
+  </div>
+
+  <div id="exam-name"><?= examTitle ?></div>
+
+  <div id="timer-pill" aria-label="Time remaining">⏱ <span id="timer">--:--</span></div>
+
+</div>
+
+<div id="progress-bar-wrap" aria-hidden="true"><div id="progress-bar"></div></div>
+
+<? if (!hasQuestions) { ?>
+
+<div id="screen-noexam" class="screen active">
+
+  <div id="no-exam-card">
+
+    <div class="icon">📋</div>
+
+    <h1>No Exam Configured</h1>
+
+    <p>The admin has not launched an exam yet.<br>Please check back later or contact your instructor.</p>
+
+    <a class="portal-back" href="<?= webAppUrl ?>" target="_top">← Return to Doctor Proctor home</a>
+
+  </div>
+
+</div>
+
+<? } else { ?>
+
+<div id="screen-start" class="screen active">
+
+  <div id="start-card">
+
+    <h1><?= examTitle ?></h1>
+
+    <div class="sub"><?= examSubtitle ?></div>
+
+    <div class="info-grid" aria-label="Exam summary">
+      <div class="info-cell"><div class="val" id="q-count-display"></div><div class="lbl">Questions</div></div>
+      <div class="info-cell"><div class="val" id="time-display"></div><div class="lbl">Duration</div></div>
+      <div class="info-cell"><div class="val" id="format-display">Mixed</div><div class="lbl">Format</div></div>
+    </div>
+
+    <div class="name-row">
+
+      <label for="student-name">Your full name</label>
+
+      <input type="text" id="student-name" placeholder="Enter your name..." autocomplete="off"/>
+
+    </div>
+
+    <div class="rules-box">
+
+      <div class="rules-title">Before you begin</div>
+      <ul>
+        <li>Complete the assessment in a single sitting.</li>
+        <li>Fullscreen is required during the exam.</li>
+        <li>Leaving fullscreen triggers a warning; if you do not return promptly, the exam may be submitted automatically.</li>
+        <li>Copy/paste may be restricted and certain suspicious interactions may be recorded.</li>
+        <li>You can return to previous questions before submitting.</li>
+        <li>Your answers are saved automatically on this device while the exam is in progress.</li>
+      </ul>
+
+    </div>
+
+    <button class="btn-primary" onclick="requestFullscreenAndStart()">Begin Exam →</button>
+
+    <a class="portal-back" href="<?= webAppUrl ?>" target="_top">← Not ready? Return home</a>
+
+  </div>
+
+</div>
+
+<div id="screen-quiz" class="screen">
+
+  <div id="quiz-wrap">
+
+    <div class="part-label" id="q-part"></div>
+
+    <div class="q-counter"  id="q-counter"></div>
+
+    <div id="q-image-wrap"></div> <!-- NEW IMAGE CONTAINER -->
+
+    <div class="q-text"     id="q-text"></div>
+
+    <div class="options"    id="options"></div>
+
+    <div id="save-status" class="save-status saved" role="status" aria-live="polite">Ready</div>
+
+    <div class="nav-row">
+
+      <button class="btn-nav"      id="btn-prev" onclick="navigate(-1)">← Previous</button>
+
+      <button class="btn-nav next" id="btn-next" onclick="navigate(1)">Next →</button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div id="screen-result" class="screen">
+
+  <div id="result-card">
+
+    <h2 id="result-heading"></h2>
+
+    <div class="result-sub" id="result-sub"></div>
+    <div id="submission-status" class="save-status" role="status" aria-live="polite" style="justify-content:center;margin:0 0 18px;">Saving response…</div>
+
+    <div class="score-circle">
+
+      <div class="pct" id="score-pct"></div>
+
+      <div class="lbl">Score</div>
+
+    </div>
+
+    <div class="result-grid">
+
+      <div class="result-cell"><div class="rv" id="rv-correct" style="color:var(--success)"></div><div class="rl">Objective</div></div>
+
+      <div class="result-cell"><div class="rv" id="rv-wrong" style="color:var(--accent)"></div><div class="rl">R coding</div></div>
+
+      <div class="result-cell"><div class="rv" id="rv-time"     style="color:var(--accent)"></div><div class="rl">Time used</div></div>
+
+    </div>
+
+    <div id="answer-review" class="review-list" hidden></div>
+
+    <a class="result-home" href="<?= webAppUrl ?>" target="_top">Return to Doctor Proctor home</a>
+
+  </div>
+
+</div>
+
+<div id="fs-warning" role="dialog" aria-modal="true" aria-labelledby="fs-warning-title">
+
+  <div id="fs-card">
+
+    <div style="font-size:44px;margin-bottom:16px;">⚠️</div>
+
+    <h2 id="fs-warning-title">You Left the Exam</h2>
+
+    <p>Return to this tab immediately or your exam will be automatically submitted.</p>
+
+    <div id="fs-ring">
+
+      <svg viewBox="0 0 64 64" width="72" height="72">
+
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#e2e8f0" stroke-width="5"/>
+
+        <circle id="fs-arc" cx="32" cy="32" r="28" fill="none" stroke="#d97706" stroke-width="5"
+
+          stroke-dasharray="175.9" stroke-dashoffset="0" stroke-linecap="round"
+
+          transform="rotate(-90 32 32)" style="transition:stroke-dashoffset 5s linear;"/>
+
+      </svg>
+
+      <div id="fs-num">5</div>
+
+    </div>
+
+    <p style="font-size:13px;margin-bottom:20px;">Submitting in <span id="fs-sec">5</span> seconds...</p>
+
+    <button class="btn-fs" onclick="reEnterFullscreen()">Return to Exam</button>
+
+  </div>
+
+</div>
+
+<div id="timeout-notice" role="dialog" aria-modal="true" aria-labelledby="timeout-title">
+
+  <div id="timeout-card">
+
+    <h2 id="timeout-title">Time's up</h2>
+
+    <p>Your exam time has ended. Submitting your answers…</p>
+
+    <button class="btn-submit-now" type="button" disabled>Submitting…</button>
+
+  </div>
+
+</div>
+
+
+<div id="recovery-overlay" class="blocking-overlay" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
+  <div class="recovery-card">
+    <h2 id="recovery-title">Continue your exam?</h2>
+    <p>We found an unfinished attempt for this exam on this device. Continue from where you left off.</p>
+    <div class="recovery-summary" id="recovery-summary"></div>
+    <button class="btn-primary" type="button" id="recovery-continue" onclick="continueRecoveredExam()">Continue exam</button>
+  </div>
+</div>
+
+<!-- ADMIN KILL MODAL -->
+
+<div id="admin-kill-notice" role="dialog" aria-modal="true" aria-labelledby="admin-kill-title">
+
+  <div id="admin-kill-card">
+
+    <div style="font-size:44px;margin-bottom:16px;">🛑</div>
+
+    <h2 id="admin-kill-title">Exam Ended by Administrator</h2>
+
+    <p>The exam has been ended by your instructor. Your answers will be submitted automatically.</p>
+
+    <div id="admin-kill-timer">--</div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Submitting in <span id="admin-kill-sec">--</span> seconds...</p>
+
+    <button class="btn-kill-submit" onclick="submitExam(true, 'administrator')">Submit Now</button>
+
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/r/r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script type="module">
+  // Retryable WebR lifecycle. A failed initialization never leaves a poisoned instance behind.
+  window.webR = null;
+  window.webRReady = false;
+  window.webRInitPromise = null;
+  window.initWebR = async function() {
+    if (window.webRReady && window.webR) return window.webR;
+    if (window.webRInitPromise) return window.webRInitPromise;
+    window.webRInitPromise = (async function(){
+      try {
+        const { WebR } = await import('https://webr.r-wasm.org/latest/webr.mjs');
+        const instance = new WebR();
+        await instance.init();
+        window.webR = instance;
+        window.webRReady = true;
+        return instance;
+      } catch (error) {
+        window.webR = null;
+        window.webRReady = false;
+        window.webRInitPromise = null;
+        throw error;
+      }
+    })();
+    return window.webRInitPromise;
+  };
+</script>
+
+<script>
+
+  let QUESTIONS=<?!= questionsJson ?>;
+
+  const SHARED_DATASET=<?!= sharedDatasetJson ?>;
+
+  const TIME_LIMIT=<?= timeLimit ?>;
+
+  const EXAM_TITLE=<?= JSON.stringify(examTitle) ?>;
+
+  const ALLOW_COPY_PASTE=<?= allowCopyPaste ? 'true' : 'false' ?>;
+
+  const SHOW_ANSWER_REVIEW=<?= showAnswerReview ? 'true' : 'false' ?>;
+
+  const RANDOMIZE_QUESTIONS=<?= randomizeQuestions ? 'true' : 'false' ?>;
+
+  const LETTERS=['A','B','C','D'];
+
+  let timeLeft=TIME_LIMIT,timerInt=null,fsInt=null,examActive=false,currentQ=0;
+  let examEndTime=null,startTime=null,submissionState='idle',submissionReason='student',pendingRecovery=null;
+  let answers=new Array(QUESTIONS.length).fill(null),studentName="";
+  let rArtifacts=new Array(QUESTIONS.length).fill(null),activeEditor=null,autosaveTimer=null;
+  const installedPackagesByQuestion={};
+
+ 
+
+  // === WebR integration, recovery, and browser-side assessment ===
+  function autosaveKey(){return 'r-exam-draft:'+EXAM_TITLE+':'+studentName;}
+  function questionOrderKey(){return 'r-exam-order:'+EXAM_TITLE+':'+studentName;}
+  function participantSeed(value){
+    let hash=2166136261;
+    for(let i=0;i<value.length;i++){
+      hash^=value.charCodeAt(i);
+      hash=Math.imul(hash,16777619);
+    }
+    return hash>>>0;
+  }
+  function randomizeQuestionsForParticipant(){
+    if(!RANDOMIZE_QUESTIONS||QUESTIONS.length<2)return;
+    let savedSeed='';
+    try{savedSeed=localStorage.getItem(questionOrderKey())||'';}catch(e){}
+    if(!savedSeed){
+      let randomPart=String(Date.now())+'|'+String(Math.random());
+      try{const values=new Uint32Array(2);crypto.getRandomValues(values);randomPart=values[0]+'|'+values[1];}catch(e){}
+      savedSeed=String(participantSeed(EXAM_TITLE+'|'+studentName.trim().toLowerCase()+'|'+randomPart)||1);
+      try{localStorage.setItem(questionOrderKey(),savedSeed);}catch(e){}
+    }
+    let state=Number(savedSeed)>>>0||1;
+    const random=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
+    const shuffled=QUESTIONS.slice();
+    for(let i=shuffled.length-1;i>0;i--){
+      const j=Math.floor(random()*(i+1));
+      [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+    }
+    QUESTIONS=shuffled;
+  }
+  function updateSaveStatus(text='Saved',saved=true){
+    const el=$('save-status');if(!el)return;el.textContent=text;el.classList.toggle('saved',saved);
+  }
+  function saveDraft(){
+    if(!examActive)return;
+    try{
+      localStorage.setItem(autosaveKey(),JSON.stringify({answers,currentQ,endTime:examEndTime,startedAt:startTime,savedAt:Date.now()}));
+      updateSaveStatus('Answer saved',true);
+    }catch(e){updateSaveStatus('Could not save locally',false);}
+  }
+  function readDraft(){
+    try{
+      const draft=JSON.parse(localStorage.getItem(autosaveKey())||'null');
+      if(!draft||!Array.isArray(draft.answers)||draft.answers.length!==QUESTIONS.length)return null;
+      const fallbackEnd=Date.now()+Math.max(0,Number(draft.timeLeft)||TIME_LIMIT)*1000;
+      draft.endTime=Number(draft.endTime)||fallbackEnd;
+      draft.startedAt=Number(draft.startedAt)||Math.max(0,draft.endTime-TIME_LIMIT*1000);
+      draft.currentQ=Math.max(0,Math.min(QUESTIONS.length-1,Number(draft.currentQ)||0));
+      return draft;
+    }catch(e){return null;}
+  }
+  function showRecoveryDialog(draft){
+    pendingRecovery=draft;
+    const remaining=Math.max(0,Math.ceil((draft.endTime-Date.now())/1000));
+    $('recovery-summary').textContent=fmt(remaining)+' remaining · Question '+(draft.currentQ+1)+' of '+QUESTIONS.length;
+    $('recovery-overlay').classList.add('show');
+    setTimeout(()=>$('recovery-continue').focus(),30);
+  }
+  function continueRecoveredExam(){
+    if(!pendingRecovery)return;
+    const draft=pendingRecovery;pendingRecovery=null;$('recovery-overlay').classList.remove('show');
+    answers=draft.answers;currentQ=draft.currentQ;examEndTime=draft.endTime;startTime=draft.startedAt;
+    beginExamSession(true);
+  }
+  function rString(value){return JSON.stringify(String(value)).replace(/\\u2028|\\u2029/g,' ');}
+  function escapeHtml(value){const div=document.createElement('div');div.textContent=String(value);return div.innerHTML;}
+  function datasetForQuestion(q){
+    return q&&q.dataset&&q.dataset.content?q.dataset:(SHARED_DATASET&&SHARED_DATASET.content?SHARED_DATASET:null);
+  }
+  function normaliseRObjectName(value){
+    let name=String(value||'dataset').replace(/\.(csv|xlsx?|xls)$/i,'').trim().replace(/[^A-Za-z0-9._]+/g,'_');
+    if(!name||name==='.'||name==='..')name='dataset';
+    if(!/^(?:[A-Za-z]|\.(?![0-9]))/.test(name))name='data_'+name;
+    return name;
+  }
+  async function prepareDataset(q){
+    const source=datasetForQuestion(q);
+    if(!source)return;
+    const filename=(source.name||'dataset.csv').replace(/[^a-zA-Z0-9._-]/g,'_');
+    const path='/home/web_user/'+filename;
+    const objectName=normaliseRObjectName(source.objectName||source.name);
+    window.webR.FS.writeFile(path,new TextEncoder().encode(source.content));
+    await window.webR.evalRVoid(objectName+' <- read.csv('+rString(path)+', stringsAsFactors=FALSE)');
+    if(objectName!=='dataset')await window.webR.evalRVoid('dataset <- '+objectName);
+  }
+  function parsePackageList(q){
+    return String(q.packages||'').split(/[\s,;]+/).map(s=>s.trim()).filter(Boolean).filter((pkg,i,arr)=>arr.indexOf(pkg)===i);
+  }
+  async function installQuestionPackages(q,questionIndex,outEl){
+    const packages=parsePackageList(q);
+    if(!packages.length||installedPackagesByQuestion[questionIndex])return;
+    outEl.textContent='Installing R package'+(packages.length>1?'s':'')+': '+packages.join(', ')+'...';
+    if(typeof window.webR.installPackages!=='function')throw new Error('This WebR build does not support package installation.');
+    await window.webR.installPackages(packages);
+    installedPackagesByQuestion[questionIndex]=true;
+  }
+  async function evaluateRTests(shelter,q){
+    const results=[];
+    for(const test of (Array.isArray(q.tests)?q.tests:[])){
+      let passed=false,error='';
+      try{passed=await window.webR.evalRBoolean('isTRUE(tryCatch({'+test.expression+'}, error=function(e) FALSE))');}catch(e){error=e.message;}
+      results.push({label:test.label||'Automated test',marks:Number(test.marks)||0,passed,error});
+    }
+    return results;
+  }
+  function renderTestResults(el,results){
+    if(!results.length){el.innerHTML='';return;}
+    el.textContent='Automated grading checks recorded. Detailed grading criteria remain hidden during the exam.';
+  }
+  async function runRCode(code,outId,btnId,questionIndex){
+    const outEl=$(outId),btnEl=$(btnId),q=QUESTIONS[questionIndex];
+    outEl.textContent='Preparing R environment…';btnEl.disabled=true;btnEl.textContent='Running…';
+    let shelter;
+    try{
+      if(window.initWebR)await window.initWebR();
+      if(!window.webR)throw new Error('WebR failed to initialize.');
+      outEl.textContent='Preparing packages and dataset…';
+      await installQuestionPackages(q,questionIndex,outEl);
+      await prepareDataset(q);outEl.textContent='Running code…';shelter=await new window.webR.Shelter();
+      const limit=Math.max(1,Math.min(60,Number(q.executionLimit)||10));
+      const result=await Promise.race([
+        shelter.captureR(code,{
+          withAutoprint:true,
+          captureStreams:true,
+          captureConditions:false,
+          captureGraphics:{width:504,height:504,bg:'white'}
+        }),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('Execution stopped after '+limit+' seconds.')),limit*1000))
+      ]);
+      const out=result.output.filter(evt=>evt.type==='stdout'||evt.type==='stderr').map(evt=>evt.data).join('\n');
+      outEl.textContent=out||'[Code executed successfully with no text output]';
+      const plotsEl=$('r-plots');plotsEl.innerHTML='';
+      const images=Array.isArray(result.images)?result.images:[];
+      images.forEach((image,index)=>{
+        const canvas=document.createElement('canvas');
+        canvas.className='r-plot';canvas.width=image.width;canvas.height=image.height;
+        canvas.setAttribute('aria-label','R plot '+(index+1));
+        const context=canvas.getContext('2d');
+        context.drawImage(image,0,0,image.width,image.height);
+        plotsEl.appendChild(canvas);
+        if(typeof image.close==='function')image.close();
+      });
+      const tests=await evaluateRTests(shelter,q);renderTestResults($('r-tests'),tests);
+      rArtifacts[questionIndex]={output:out,plotCount:images.length,tests,ranAt:new Date().toISOString()};
+    }catch(e){
+      if(window.webR&&/stopped after/.test(e.message)){try{window.webR.interrupt();}catch(ignore){}}
+      outEl.textContent='Error: '+e.message+(/fetch|module|initialize|network/i.test(String(e.message))?'\n\nThe R environment did not load correctly. Tap Run Code to retry.':'');
+      rArtifacts[questionIndex]={output:outEl.textContent,plotCount:0,tests:[],error:e.message};
+    }finally{
+      if(shelter){try{await shelter.purge();}catch(ignore){}}
+      btnEl.disabled=false;btnEl.textContent='Run Code';saveDraft();
+    }
+  }
+
+  // === iOS FIX: Web Worker for 5-second countdown ===
+
+  const workerCode = `
+
+    let timerId = null;
+
+    let remaining = 5000;
+
+    let startTime = 0;
+
+   
+
+    self.onmessage = function(e) {
+
+      if (e.data === 'start') {
+
+        if (timerId) clearTimeout(timerId);
+
+        startTime = performance.now();
+
+        remaining = 5000;
+
+       
+
+        const tick = function() {
+
+          const elapsed = performance.now() - startTime;
+
+          remaining = Math.max(0, 5000 - elapsed);
+
+          self.postMessage({ remaining: remaining, done: remaining <= 0 });
+
+          if (remaining > 0) {
+
+            timerId = setTimeout(tick, 50);
+
+          }
+
+        };
+
+        timerId = setTimeout(tick, 50);
+
+      }
+
+      if (e.data === 'stop') {
+
+        if (timerId) clearTimeout(timerId);
+
+        timerId = null;
+
+        remaining = 5000;
+
+      }
+
+    };
+
+  `;
+
+  const blob = new Blob([workerCode], { type: 'application/javascript' });
+
+  const timerWorker = new Worker(URL.createObjectURL(blob));
+
+ 
+
+  timerWorker.onmessage = function(e) {
+
+    if (e.data.done) {
+
+      clearInterval(fsInt);
+
+      $('fs-warning').classList.remove('show');
+
+      submitExam(true,'fullscreen');
+
+    } else {
+
+      const sec = Math.ceil(e.data.remaining / 1000);
+
+      $('fs-num').textContent = $('fs-sec').textContent = sec;
+
+    }
+
+  };
+
+ 
+
+  // === iOS FIX: Heartbeat detection ===
+
+  let lastHeartbeat = Date.now();
+
+  let heartbeatInterval = null;
+
+  let isHidden = false;
+
+ 
+
+  function startHeartbeat() {
+
+    lastHeartbeat = Date.now();
+
+    heartbeatInterval = setInterval(function() {
+
+      const now = Date.now();
+
+      const diff = now - lastHeartbeat;
+
+      lastHeartbeat = now;
+
+      if (diff > 800 && !isHidden && examActive) {
+
+        isHidden = true;
+
+        showFsWarning();
+
+      }
+
+    }, 200);
+
+  }
+
+ 
+
+  function stopHeartbeat() {
+
+    if (heartbeatInterval) {
+
+      clearInterval(heartbeatInterval);
+
+      heartbeatInterval = null;
+
+    }
+
+  }
+
+ 
+
+  // === ADMIN KILL: Polling variables ===
+
+  let pollInterval = null;
+
+  let killGraceTimer = null;
+
+  let killGraceRemaining = 0;
+
+ 
+
+  // === ANTI-CHEATING: Copy-Paste Block ===
+
+  let suspiciousEvents = [];
+
+ 
+
+  function logSuspicious(type, detail) {
+
+    suspiciousEvents.push({
+
+      type: type,
+
+      detail: detail || '',
+
+      timestamp: new Date().toISOString(),
+
+      questionIndex: currentQ
+
+    });
+
+    try {
+
+      google.script.run.logSuspiciousActivity({
+
+        studentName: studentName || 'Anonymous',
+
+        examTitle: EXAM_TITLE,
+
+        type: type,
+
+        detail: detail || '',
+
+        questionIndex: currentQ,
+
+        timeLeft: timeLeft
+
+      });
+
+    } catch(e) {}
+
+  }
+
+ 
+
+  function initCopyPasteBlock() {
+
+    if (ALLOW_COPY_PASTE) return;
+
+    const blockEvents = ['copy', 'cut', 'paste', 'dragstart', 'drop', 'contextmenu'];
+
+   
+
+    blockEvents.forEach(evt => {
+
+      document.addEventListener(evt, function(e) {
+
+        if (!examActive) return;
+
+       
+
+        // Allowed inside R Coding blocks specifically
+
+        if (e.target && e.target.closest && (e.target.closest('.CodeMirror') || e.target.closest('.code-editor'))) return;
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+       
+
+        const target = e.target.closest('.opt, .blank-input, .q-text, .btn-nav, .btn-primary') || document.body;
+
+        target.classList.remove('copy-blocked');
+
+        void target.offsetWidth;
+
+        target.classList.add('copy-blocked');
+
+        setTimeout(() => target.classList.remove('copy-blocked'), 2000);
+
+       
+
+        logSuspicious('copy_paste_attempt', evt);
+
+        return false;
+
+      }, true);
+
+    });
+
+   
+
+    document.addEventListener('keydown', function(e) {
+
+      if (!examActive) return;
+      const inCodeEditor=!!(e.target && e.target.closest && (e.target.closest('.CodeMirror') || e.target.closest('.code-editor')));
+      const key = e.key.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+      if(inCodeEditor && ctrl && ['c','x','v','a'].includes(key))return;
+
+     
+
+      if (ctrl && ['c','x','v','a','p','s'].includes(key)) {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+        logSuspicious('keyboard_shortcut_blocked', 'Ctrl/Cmd+' + key.toUpperCase());
+
+        return false;
+
+      }
+
+     
+
+      if (key === 'printscreen' || key === 'prtsc' || key === 'snapshot') {
+
+        e.preventDefault();
+
+        document.body.classList.add('screenshot-blur');
+
+        setTimeout(() => document.body.classList.remove('screenshot-blur'), 1500);
+
+        logSuspicious('screenshot_attempt', 'PrintScreen key');
+
+        return false;
+
+      }
+
+    }, true);
+
+   
+
+    const noSelectCSS = `
+
+      .q-text, .opt, .opt-text, .part-label, .q-counter {
+
+        -webkit-user-select: none !important;
+
+        -moz-user-select: none !important;
+
+        -ms-user-select: none !important;
+
+        user-select: none !important;
+
+      }
+
+      .blank-input, .code-editor, .r-output {
+
+        -webkit-user-select: text !important;
+
+        -moz-user-select: text !important;
+
+        -ms-user-select: text !important;
+
+        user-select: text !important;
+
+      }
+
+    `;
+
+    const style = document.createElement('style');
+
+    style.textContent = noSelectCSS;
+
+    document.head.appendChild(style);
+
+   
+
+    document.addEventListener('keydown', function(e) {
+
+      if (!examActive) return;
+
+      if (e.key === 'F12') {
+
+        e.preventDefault();
+
+        logSuspicious('devtools_attempt', 'F12');
+
+        return false;
+
+      }
+
+      if ((e.ctrlKey && e.shiftKey && ['i','j','c','k'].includes(e.key.toLowerCase())) ||
+
+          (e.metaKey && e.altKey && ['i','j'].includes(e.key.toLowerCase()))) {
+
+        e.preventDefault();
+
+        e.stopPropagation();
+
+        logSuspicious('devtools_attempt', 'Ctrl+Shift+' + e.key.toUpperCase());
+
+        return false;
+
+      }
+
+    }, true);
+
+  }
+
+  function $(id){return document.getElementById(id);}
+
+  function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
+
+  function focusFirstInDialog(id){
+    const dialog=$(id);if(!dialog)return;
+    const first=dialog.querySelector('button:not([disabled]),input:not([disabled]),a[href]');
+    if(first)setTimeout(()=>first.focus(),30);
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Tab')return;
+    const dialog=[...document.querySelectorAll('[role="dialog"].show')].pop();
+    if(!dialog)return;
+    const focusable=[...dialog.querySelectorAll('button:not([disabled]),input:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])')];
+    if(!focusable.length){e.preventDefault();return;}
+    const first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  });
+
+  function fmt(s){return Math.floor(s/60).toString().padStart(2,'0')+':'+(s%60).toString().padStart(2,'0');}
+
+  $('q-count-display').textContent=QUESTIONS.length;
+
+    (function(){
+    const mins=Math.round(TIME_LIMIT/60);
+    $('time-display').textContent=(mins>=60&&mins%60===0)?(mins/60)+' h':mins+' min';
+  })();
+
+  (function(){
+
+    const hasMcq=QUESTIONS.some(q=>q.type!=='fillblank'&&q.type!=='rcoding');
+
+    const hasBlank=QUESTIONS.some(q=>q.type==='fillblank');
+
+    const hasRCoding=QUESTIONS.some(q=>q.type==='rcoding');
+
+    const types=[hasMcq,hasBlank,hasRCoding].filter(Boolean).length;
+    $('format-display').textContent=types>1?'Mixed':(hasRCoding?'R coding':(hasBlank?'Fill blank':'MCQ'));
+
+  })();
+
+
+  function prewarmWebRIfNeeded(){
+    if(!QUESTIONS.some(q=>q.type==='rcoding'))return;
+    setTimeout(()=>{window.initWebR&&window.initWebR().catch(()=>{});},800);
+  }
+  prewarmWebRIfNeeded();
+  function requestFullscreenAndStart(){
+
+    const n=$('student-name').value.trim();
+
+    if(!n){$('student-name').classList.add('error');$('student-name').focus();return;}
+
+    $('student-name').classList.remove('error');
+
+    const el=document.documentElement;
+
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+
+    if(req) req.call(el).then(()=>startExam()).catch(()=>startExam());
+
+    else startExam();
+
+  }
+
+  function reEnterFullscreen(){
+
+    timerWorker.postMessage('stop');
+
+    clearInterval(fsInt);
+
+    $('fs-warning').classList.remove('show');
+
+    isHidden = false;
+
+    const el=document.documentElement;
+
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+
+    if(req) req.call(el).catch(()=>{});
+
+  }
+
+  function handleFsChange(){
+
+    if(!examActive)return;
+
+    const isFs=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
+
+    if(!isFs) {
+
+      logSuspicious('fullscreen_exit', 'Fullscreen API change');
+
+      showFsWarning();
+
+    }
+
+  }
+
+  function handleVisibilityChange(){
+
+    if(!examActive)return;
+
+    if(document.hidden || document.visibilityState === 'hidden'){
+
+      isHidden = true;
+
+      logSuspicious('tab_hidden', 'visibilitychange: hidden');
+
+      showFsWarning();
+
+    }else if($('fs-warning').classList.contains('show')){
+
+      timerWorker.postMessage('stop');
+
+      clearInterval(fsInt);
+
+      $('fs-warning').classList.remove('show');
+
+      isHidden = false;
+
+    }
+
+  }
+
+  function showFsWarning(){
+
+    if($('fs-warning').classList.contains('show'))return;
+
+    let sec=5;
+
+    $('fs-num').textContent=$('fs-sec').textContent=sec;
+
+    $('fs-arc').style.transition='none';$('fs-arc').style.strokeDashoffset='0';
+
+    $('fs-warning').classList.add('show');focusFirstInDialog('fs-warning');
+
+    setTimeout(()=>{$('fs-arc').style.transition='stroke-dashoffset 5s linear';$('fs-arc').style.strokeDashoffset='175.9';},50);
+
+    clearInterval(fsInt);
+
+    timerWorker.postMessage('start');
+
+    fsInt=setInterval(()=>{
+
+      sec--;
+
+      if(sec<=0){
+
+        clearInterval(fsInt);
+
+        $('fs-warning').classList.remove('show');
+
+        if(!examActive) return;
+
+        submitExam(true,'fullscreen');
+
+      }
+
+    },1000);
+
+  }
+
+  ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(e=>document.addEventListener(e,handleFsChange));
+
+  document.addEventListener('visibilitychange',handleVisibilityChange);
+
+ 
+
+  window.addEventListener('pagehide', function() {
+
+    if(examActive) {
+
+      isHidden = true;
+
+      logSuspicious('pagehide', 'Tab closed or navigated away');
+
+      showFsWarning();
+
+    }
+
+  });
+
+  window.addEventListener('pageshow', function(e) {
+
+    if(examActive && !e.persisted) {
+
+      timerWorker.postMessage('stop');
+
+      clearInterval(fsInt);
+
+      $('fs-warning').classList.remove('show');
+
+      isHidden = false;
+
+    }
+
+  });
+
+  // === ADMIN KILL: Poll for exam status every 5 seconds ===
+
+  function startExamStatusPolling() {
+
+    pollInterval = setInterval(function() {
+
+      if (!examActive) return;
+
+      try {
+
+        google.script.run.withSuccessHandler(function(status) {
+
+          if (status.killed) {
+
+            handleAdminKill(status.graceSeconds || 0);
+
+          }
+
+        }).checkExamActive();
+
+      } catch(e) {}
+
+    }, 5000);
+
+  }
+
+ 
+
+  function stopExamStatusPolling() {
+
+    if (pollInterval) {
+
+      clearInterval(pollInterval);
+
+      pollInterval = null;
+
+    }
+
+  }
+
+ 
+
+  function handleAdminKill(graceSeconds) {
+
+    if ($('admin-kill-notice').classList.contains('show')) return;
+
+   
+
+    logSuspicious('admin_kill', 'Exam ended by administrator. Grace: ' + graceSeconds + 's');
+
+   
+
+    if (graceSeconds > 0) {
+
+      killGraceRemaining = graceSeconds;
+
+      $('admin-kill-timer').textContent = killGraceRemaining;
+
+      $('admin-kill-sec').textContent = killGraceRemaining;
+
+      $('admin-kill-notice').classList.add('show');focusFirstInDialog('admin-kill-notice');
+
+     
+
+      killGraceTimer = setInterval(function() {
+
+        killGraceRemaining--;
+
+        $('admin-kill-timer').textContent = killGraceRemaining;
+
+        $('admin-kill-sec').textContent = killGraceRemaining;
+
+       
+
+        if (killGraceRemaining <= 0) {
+
+          clearInterval(killGraceTimer);
+
+          $('admin-kill-notice').classList.remove('show');
+
+          submitExam(true,'administrator');
+
+        }
+
+      }, 1000);
+
+    } else {
+
+      submitExam(true,'administrator');
+
+    }
+
+  }
+
+  function startExam(){
+    studentName=$('student-name').value.trim()||"Anonymous";
+    randomizeQuestionsForParticipant();
+    const draft=readDraft();
+    if(draft){showRecoveryDialog(draft);return;}
+    startTime=Date.now();examEndTime=startTime+TIME_LIMIT*1000;currentQ=0;
+    beginExamSession(false);
+  }
+
+  function beginExamSession(restored){
+    if(submissionState==='submitted'||submissionState==='submitting')return;
+    timeLeft=Math.max(0,Math.ceil((examEndTime-Date.now())/1000));
+    examActive=true;showScreen('screen-quiz');renderQuestion(currentQ);tick();
+    timerInt=setInterval(tick,500);
+    history.pushState(null,'',location.href);
+    window.addEventListener('popstate',()=>history.pushState(null,'',location.href));
+    startHeartbeat();initCopyPasteBlock();startExamStatusPolling();autosaveTimer=setInterval(saveDraft,2000);
+    logSuspicious(restored?'exam_restored':'exam_started',restored?'Student continued saved attempt':'Student began exam');
+    if(timeLeft<=0)submitExam(true,'timeout');
+  }
+
+  function tick(){
+    if(!examActive||!examEndTime)return;
+    timeLeft=Math.max(0,Math.ceil((examEndTime-Date.now())/1000));$('timer').textContent=fmt(timeLeft);
+    const p=$('timer-pill');p.className='';
+    if(timeLeft<=60)p.className='danger';else if(timeLeft<=180)p.className='warn';
+    if(timeLeft<=0){
+      clearInterval(timerInt);$('timeout-notice').classList.add('show');
+      submitExam(true,'timeout');
+    }
+  }
+
+  function renderQuestion(idx){
+
+    currentQ=idx;activeEditor=null;const q=QUESTIONS[idx];
+
+    $('q-part').textContent=q.part;
+
+    $('q-counter').textContent=(idx+1)+' / '+QUESTIONS.length;
+
+   
+
+    // IMAGE RENDERING LOGIC
+
+    $('q-image-wrap').innerHTML = q.image ? '<img src="'+q.image+'" alt="Question illustration" style="max-width:100%; border-radius:var(--radius); margin-bottom:16px; box-shadow:var(--shadow); display:block;"/>' : '';
+
+   
+
+    $('q-text').textContent=q.q;
+
+    const opts=$('options');opts.innerHTML='';
+
+    if(q.type==='fillblank'){
+
+      const n=getBlankCount(q);
+
+      if(n>1){
+
+        if(!Array.isArray(answers[idx])) answers[idx]=new Array(n).fill('');
+
+        for(let bi=0;bi<n;bi++){
+
+          const wrap=document.createElement('div');wrap.className='blank-wrap';
+
+          const label=document.createElement('div');label.className='blank-hint';label.style.marginTop='0';label.style.marginBottom='6px';
+
+          label.textContent='Blank '+(bi+1)+':';
+
+          wrap.appendChild(label);
+
+          const inp=document.createElement('input');
+
+          inp.type='text';inp.className='blank-input';inp.id='blank-input-'+bi;
+
+          inp.placeholder='Type your answer...';inp.autocomplete='off';
+
+          inp.value=answers[idx][bi]||'';
+
+          inp.oninput=()=>{answers[currentQ][bi]=inp.value;updateSaveStatus('Saving…',false);};
+
+          if(bi===n-1) inp.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();navigate(1);}};
+
+          wrap.appendChild(inp);
+
+          opts.appendChild(wrap);
+
+          if(bi===0) setTimeout(()=>inp.focus(),50);
+
+        }
+
+        const hint=document.createElement('div');hint.className='blank-hint';
+
+        hint.textContent='Fill in all '+n+' blanks --- type your answers above.';
+
+        opts.appendChild(hint);
+
+      }else{
+
+        const wrap=document.createElement('div');wrap.className='blank-wrap';
+
+        const inp=document.createElement('input');
+
+        inp.type='text';inp.className='blank-input';inp.id='blank-input';
+
+        inp.placeholder='Type your answer...';inp.autocomplete='off';
+
+        inp.value=answers[idx]!==null&&answers[idx]!==undefined?answers[idx]:'';
+
+        inp.oninput=()=>{answers[currentQ]=inp.value;updateSaveStatus('Saving…',false);};
+
+        inp.onkeydown=(e)=>{if(e.key==='Enter'){e.preventDefault();navigate(1);}};
+
+        wrap.appendChild(inp);
+
+        const hint=document.createElement('div');hint.className='blank-hint';
+
+        hint.textContent='Fill in the blank --- type your answer above.';
+
+        wrap.appendChild(hint);
+
+        opts.appendChild(wrap);
+
+        setTimeout(()=>inp.focus(),50);
+
+      }
+
+    } else if (q.type === 'rcoding') {
+
+      const wrap = document.createElement('div');
+
+      wrap.className = 'blank-wrap r-workspace';
+
+     
+
+      const label = document.createElement('div');
+
+      label.className = 'blank-hint';
+
+      label.style.marginTop = '0';
+
+      label.style.marginBottom = '6px';
+
+      label.innerHTML = '<strong>R coding workspace</strong> · Write and test your R code below.';
+
+      wrap.appendChild(label);
+
+     
+
+      const textarea = document.createElement('textarea');
+
+      textarea.className = 'code-editor';
+
+      textarea.placeholder = '# Write your R script here...\n# e.g., print("Hello World")';
+
+      textarea.value = answers[idx] || q.starterCode || '';
+
+      textarea.oninput = () => { answers[idx] = textarea.value; updateSaveStatus('Saving…',false); saveDraft(); };
+
+     
+
+      // Allow tab spacing within the editor
+
+      textarea.addEventListener('keydown', function(e) {
+
+        if (e.key === 'Tab') {
+
+          e.preventDefault();
+
+          const start = this.selectionStart;
+
+          const end = this.selectionEnd;
+
+          this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+
+          this.selectionStart = this.selectionEnd = start + 2;
+
+        }
+
+      });
+
+     
+
+      wrap.appendChild(textarea);
+
+     
+
+      const runBtn = document.createElement('button');
+
+      runBtn.id = 'btn-run-r';
+
+      runBtn.className = 'btn-run';
+
+      runBtn.textContent = 'Run Code';
+
+     
+
+      const outPre = document.createElement('div');
+
+      outPre.id = 'r-output';
+
+      outPre.className = 'r-output';
+
+      outPre.textContent = 'Console output will appear here...';
+
+     
+
+      const toolbar=document.createElement('div');toolbar.className='r-toolbar';
+      const status=document.createElement('span');status.className='r-progress';status.textContent='Limit: '+(q.executionLimit||10)+' seconds per run · Ctrl/Cmd + Enter to run';
+      toolbar.appendChild(runBtn);toolbar.appendChild(status);
+      const activeDataset=datasetForQuestion(q);
+      if(activeDataset&&activeDataset.name){const objectName=normaliseRObjectName(activeDataset.objectName||activeDataset.name);const note=document.createElement('div');note.className='dataset-note';note.textContent=(q.dataset?'Question dataset: ':'Shared dataset: ')+activeDataset.name+' (available in R as '+objectName+(objectName==='dataset'?'':' and dataset')+')';wrap.appendChild(note);}
+      const plots=document.createElement('div');plots.id='r-plots';plots.className='r-plots';
+      const tests=document.createElement('div');tests.id='r-tests';tests.className='test-results';
+      runBtn.onclick=()=>{const code=activeEditor?activeEditor.getValue():textarea.value;answers[idx]=code;runRCode(code,'r-output','btn-run-r',idx);};
+      wrap.appendChild(toolbar);wrap.appendChild(outPre);wrap.appendChild(plots);wrap.appendChild(tests);opts.appendChild(wrap);
+      if(window.CodeMirror){
+        activeEditor=CodeMirror.fromTextArea(textarea,{mode:'r',lineNumbers:true,indentUnit:2,matchBrackets:true,lineWrapping:true,extraKeys:{'Ctrl-Enter':()=>runBtn.click(),'Cmd-Enter':()=>runBtn.click()}});
+        activeEditor.on('change',cm=>{answers[idx]=cm.getValue();updateSaveStatus('Saving…',false);saveDraft();});
+      }
+
+    } else {
+
+      const isMultipleResponse=Array.isArray(q.correct)&&q.correct.length>1;
+
+      if(isMultipleResponse&&!Array.isArray(answers[idx]))answers[idx]=answers[idx]===null?[]:[answers[idx]];
+
+      if(isMultipleResponse){const hint=document.createElement('div');hint.className='blank-hint';hint.style.marginTop='0';hint.style.marginBottom='10px';hint.textContent='Select all correct answers.';opts.appendChild(hint);}
+
+      q.options.forEach((opt,i)=>{
+
+        const div=document.createElement('button');
+        div.type='button';
+        const selected=isMultipleResponse?answers[idx].includes(i):answers[idx]===i;
+        div.className='opt'+(isMultipleResponse?' multi':'')+(selected?' selected':'');
+        div.setAttribute('aria-pressed',selected?'true':'false');
+        div.setAttribute('aria-label',(isMultipleResponse?'Toggle ':'Select ')+'option '+LETTERS[i]+': '+opt);
+        div.onclick=()=>selectAnswer(i);
+        div.innerHTML='<span class="opt-letter">'+LETTERS[i]+'</span><span class="opt-text">'+escapeHtml(opt)+'</span>';
+        opts.appendChild(div);
+
+      });
+
+    }
+
+    $('btn-prev').disabled=idx===0;
+
+    $('btn-next').textContent=idx===QUESTIONS.length-1?'Submit ✓':'Next →';
+
+    $('progress-bar').style.width=((idx+1)/QUESTIONS.length*100).toFixed(1)+'%';
+
+  }
+
+  function selectAnswer(i){
+
+    const q=QUESTIONS[currentQ];
+
+    const isMultipleResponse=Array.isArray(q.correct)&&q.correct.length>1;
+
+    if(isMultipleResponse){
+
+      const selected=Array.isArray(answers[currentQ])?answers[currentQ].slice():[];
+
+      const position=selected.indexOf(i);
+
+      if(position>=0)selected.splice(position,1);else selected.push(i);
+
+      answers[currentQ]=selected.sort((a,b)=>a-b);
+
+    }else answers[currentQ]=i;
+
+    updateSaveStatus('Saving…',false);saveDraft();
+    document.querySelectorAll('.opt').forEach((el,idx)=>{
+
+      const s=isMultipleResponse?answers[currentQ].includes(idx):idx===i;el.classList.toggle('selected',s);el.setAttribute('aria-pressed',s?'true':'false');
+
+      el.querySelector('.opt-letter').style.background=s?'var(--accent)':'';
+
+      el.querySelector('.opt-letter').style.borderColor=s?'var(--accent)':'';
+
+      el.querySelector('.opt-letter').style.color=s?'#fff':'';
+
+    });
+
+  }
+
+  function normalizeText(s){return String(s||'').trim().toLowerCase().replace(/\s+/g,' ');}
+
+  function isMcqCorrect(userAnswer,q){
+
+    const expected=(Array.isArray(q.correct)?q.correct:[q.correct]).map(Number).sort();
+
+    const chosen=(Array.isArray(userAnswer)?userAnswer:[userAnswer]).filter(value=>value!==null&&value!==undefined&&value!=='').map(Number).sort();
+
+    return expected.length>0&&expected.length===chosen.length&&expected.every((value,index)=>value===chosen[index]);
+
+  }
+
+  function getBlankCount(q){
+
+    if(q.type!=='fillblank')return 1;
+
+    if(q.blanks>=1)return q.blanks;
+
+    if(Array.isArray(q.correct)&&Array.isArray(q.correct[0]))return q.correct.length;
+
+    return 1;
+
+  }
+
+  function isFillBlankCorrect(userAnswer,q){
+
+    const n=getBlankCount(q);
+
+    if(n>1){
+
+      if(!Array.isArray(userAnswer))return false;
+
+      const groups=q.correct;
+
+      for(let i=0;i<groups.length;i++){
+
+        const ua=userAnswer[i];
+
+        if(ua===null||ua===undefined||!String(ua).trim())return false;
+
+        const uaN=normalizeText(ua);
+
+        if(!groups[i].some(a=>normalizeText(a)===uaN))return false;
+
+      }
+
+      return true;
+
+    }
+
+    if(userAnswer===null||userAnswer===undefined||!String(userAnswer).trim())return false;
+
+    const accepted=Array.isArray(q.correct)?q.correct:[q.correct];
+
+    const ua=normalizeText(userAnswer);
+
+    return accepted.some(a=>normalizeText(a)===ua);
+
+  }
+
+  function navigate(dir){
+
+    const next=currentQ+dir;
+
+    if(next>=QUESTIONS.length){submitExam(false,'student');return;}
+
+    if(next<0)return;renderQuestion(next);
+
+  }
+
+  function formatReviewAnswer(item,value,isCorrectAnswer){
+    if(item.type==='fillblank'){
+      if(isCorrectAnswer&&Array.isArray(value)){
+        return value.map(group=>Array.isArray(group)?group.join(' / '):String(group||'')).filter(Boolean).join(' ; ')||'No answer';
+      }
+      if(Array.isArray(value))return value.map(v=>String(v||'').trim()).filter(Boolean).join(' / ')||'No answer';
+      return value!==null&&value!==undefined&&String(value).trim()?String(value):'No answer';
+    }
+    if(item.type==='rcoding'){
+      if(isCorrectAnswer)return value!==null&&value!==undefined&&String(value).trim()?String(value):'Assessed using the configured automated tests.';
+      return value!==null&&value!==undefined&&String(value).trim()?String(value):'No answer';
+    }
+    const indexes=(Array.isArray(value)?value:[value]).map(Number).filter(index=>Number.isInteger(index)&&index>=0&&index<(item.options||[]).length);
+    return indexes.length?indexes.map(index=>LETTERS[index]+'. '+item.options[index]).join(' / '):'No answer';
+  }
+
+  function renderAnswerReview(items,enabled){
+    const review=$('answer-review');
+    if(!review)return;
+    review.replaceChildren();
+    review.hidden=enabled!==true;
+    if(enabled!==true)return;
+
+    const heading=document.createElement('h3');
+    heading.textContent='Answer review';
+    heading.style.marginBottom='18px';
+    review.appendChild(heading);
+
+    items.forEach((item,index)=>{
+      const row=document.createElement('div');row.className='review-item';
+      const question=document.createElement('div');question.className='review-q';
+      const number=document.createElement('span');number.textContent='Question '+(index+1)+': ';
+      question.appendChild(number);question.appendChild(document.createTextNode(item.q||''));
+
+      const submitted=document.createElement('div');
+      submitted.className='review-your '+(item.isCorrect?'correct':'wrong');
+      submitted.style.whiteSpace='pre-wrap';
+      submitted.textContent='Your answer: '+formatReviewAnswer(item,item.chosen,false);
+
+      const correct=document.createElement('div');correct.className='review-ans';
+      correct.style.whiteSpace='pre-wrap';
+      correct.textContent='Correct answer: '+formatReviewAnswer(item,item.correct,true);
+      row.append(question,submitted,correct);review.appendChild(row);
+    });
+  }
+
+  function submitExam(terminated,reason){
+
+    if(submissionState==='submitting'||submissionState==='submitted')return;
+    submissionState='submitting';submissionReason=reason||'student';
+
+    clearInterval(timerInt);clearInterval(fsInt);examActive=false;
+
+    clearInterval(autosaveTimer);
+
+    stopHeartbeat();
+
+    stopExamStatusPolling();
+
+    if (killGraceTimer) {
+
+      clearInterval(killGraceTimer);
+
+      killGraceTimer = null;
+
+    }
+
+    try{timerWorker.postMessage('stop');timerWorker.terminate();}catch(e){}
+
+    $('timeout-notice').classList.remove('show');
+
+    $('fs-warning').classList.remove('show');
+
+    $('admin-kill-notice').classList.remove('show');
+
+   
+
+    const timeTaken=Math.max(0,Math.min(TIME_LIMIT,Math.round((Date.now()-(startTime||Date.now()))/1000)));
+
+    let correct=0;let automatedREarned=0;let automatedRMax=0;const reviewData=[];
+
+    QUESTIONS.forEach((q,i)=>{
+
+      const ua=answers[i];
+
+      const isR=q.type==='rcoding';
+      const ok = isR ? false : (q.type === 'fillblank' ? isFillBlankCorrect(ua,q) : isMcqCorrect(ua,q));
+
+      if(isR){
+        const definitions=Array.isArray(q.tests)?q.tests:[];
+        const results=(rArtifacts[i]&&Array.isArray(rArtifacts[i].tests))?rArtifacts[i].tests:[];
+        automatedRMax+=definitions.reduce((sum,test)=>sum+(Number(test.marks)||0),0);
+        automatedREarned+=definitions.reduce((sum,test,ti)=>sum+(results[ti]&&results[ti].passed?(Number(test.marks)||0):0),0);
+      }
+
+      if(ok)correct++;
+
+      reviewData.push({q:q.q,type:q.type||'mcq',blanks:q.blanks,options:q.options,chosen:ua,correct:q.correct,isCorrect:ok});
+
+    });
+
+    // Adjust total to ignore rcoding from immediate percentage
+
+    const mcqBlankCount = QUESTIONS.filter(q => q.type !== 'rcoding').length;
+
+    const total = mcqBlankCount > 0 ? mcqBlankCount : 1;
+
+    const automaticEarned=correct+automatedREarned;
+    const automaticMax=mcqBlankCount+automatedRMax;
+    const score=automaticMax?Math.round(automaticEarned/automaticMax*100):0;
+
+    showScreen('screen-result');
+
+   
+
+    const headingByReason={administrator:'Exam ended by administrator',timeout:'Time expired — exam submitted',fullscreen:'Exam submitted',student:'Exam submitted'};
+    $('result-heading').textContent=headingByReason[submissionReason]||'Exam submitted';
+
+   
+
+    $('result-sub').textContent=studentName+' · '+new Date().toLocaleString();
+
+    $('score-pct').textContent=score+'%';
+
+    $('rv-correct').textContent=correct+' / '+mcqBlankCount;$('rv-wrong').textContent=automatedREarned+' / '+automatedRMax;$('rv-time').textContent=fmt(timeTaken);
+
+    const col=score>=70?'var(--success)':score>=50?'var(--warn)':'var(--danger)';
+
+    document.querySelector('.score-circle').style.borderColor=col;$('score-pct').style.color=col;
+
+    // Fail closed: answers remain hidden unless the server confirms that the
+    // currently active exam explicitly permits post-submission review.
+    renderAnswerReview(reviewData,false);
+    google.script.run
+      .withSuccessHandler(enabled=>renderAnswerReview(reviewData,enabled===true))
+      .withFailureHandler(()=>renderAnswerReview(reviewData,false))
+      .getAnswerReviewSetting();
+
+
+    try{
+
+      google.script.run
+        .withSuccessHandler(function(){try{localStorage.removeItem(autosaveKey());localStorage.removeItem(questionOrderKey());}catch(e){}const el=$('submission-status');if(el){el.textContent='Response saved';el.classList.add('saved');}})
+        .withFailureHandler(function(){const el=$('submission-status');if(el){el.textContent='Could not confirm server save. Please tell your instructor before closing this page.';el.classList.remove('saved');}})
+        .saveResults({
+
+        name:studentName,
+
+        title:EXAM_TITLE,
+
+        score,
+
+        correct,
+
+        total: mcqBlankCount,
+
+        timeTaken,
+
+        answers: reviewData.map(r => {
+
+          let chosenText = "No answer";
+
+          let correctText = "";
+
+          if (r.type === 'fillblank') {
+
+            if (Array.isArray(r.chosen)) {
+
+              const valid = r.chosen.filter(x => x && String(x).trim());
+
+              chosenText = valid.length ? valid.join(" / ") : "No answer";
+
+            } else {
+
+              chosenText = (r.chosen !== null && r.chosen !== undefined && String(r.chosen).trim()) ? r.chosen : "No answer";
+
+            }
+
+            if (Array.isArray(r.correct)) {
+
+              correctText = r.correct.map(g => Array.isArray(g) ? g.join(" / ") : g).join(" ; ");
+
+            } else {
+
+              correctText = r.correct;
+
+            }
+
+          } else if (r.type === 'rcoding') {
+
+            chosenText = (r.chosen !== null && r.chosen !== undefined && String(r.chosen).trim()) ? r.chosen : "No answer";
+
+            correctText = r.correct;
+
+          } else {
+
+            const chosenIndexes=(Array.isArray(r.chosen)?r.chosen:[r.chosen]).map(Number).filter(index=>index>=0&&index<4);
+
+            const correctIndexes=(Array.isArray(r.correct)?r.correct:[r.correct]).map(Number).filter(index=>index>=0&&index<4);
+
+            chosenText = chosenIndexes.length ? chosenIndexes.map(index=>"Option "+LETTERS[index]).join(" / ") : "No answer";
+
+            correctText = correctIndexes.map(index=>"Option "+LETTERS[index]).join(" / ");
+
+          }
+
+          return {
+
+            type: r.type,
+
+            chosen: r.chosen,
+
+            correct: r.correct,
+
+            isCorrect: r.isCorrect,
+
+            chosenText: chosenText,
+
+            correctText: correctText,
+
+            question: r.q,
+
+            rubric: QUESTIONS[reviewData.indexOf(r)].rubric || [],
+
+            testDefinitions: QUESTIONS[reviewData.indexOf(r)].tests || [],
+
+            automated: r.type === 'rcoding' ? (rArtifacts[reviewData.indexOf(r)] || {}) : null
+
+          };
+
+        }),
+
+        suspiciousEvents: suspiciousEvents
+
+      });
+
+      submissionState='submitted';
+
+    }catch(e){submissionState='submitted';}
+
+  }
+
+</script>
+
+<? } ?>
+
+</body>
+
+</html>
