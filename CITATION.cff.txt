@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use Doctor Proctor in your research or software, please cite it using the metadata from this file."
+type: software
+title: "Doctor Proctor: Automated Examination & Evaluation Framework"
+abstract: "An automated proctoring and evaluation framework designed to monitor, assess, and streamline digital examinations with configurable anomaly detection and detailed reporting."
+authors:
+  - family-names: "Bagchi"
+    given-names: "Dipanjan"
+version: "1.0.0"
+date-released: "2026-11-21"
+license: MIT
+repository-code: "https://github.com/Dipanjan491/doctor-proctor"
+url: "https://github.com/Dipanjan491/doctor-proctor"
+keywords:
+  - automated proctoring
+  - online examination
+  - evaluation framework
+  - educational technology
+  - academic integrity

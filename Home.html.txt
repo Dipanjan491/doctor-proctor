@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Doctor Proctor | Secure Online Assessments</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var preference = localStorage.getItem('doctor-proctor.theme') || 'system';
+        var dark = preference === 'dark' || (preference === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        document.documentElement.dataset.themePreference = preference;
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --page: #f6f8f7;
+      --surface: #ffffff;
+      --surface-soft: #f0f5f3;
+      --line: #dfe7e3;
+      --line-strong: #c9d8d1;
+      --text: #16222b;
+      --muted: #55636d;
+      --muted-2: #66756f;
+      --accent: #147d62;
+      --accent-hover: #0d5c49;
+      --accent-ink: #ffffff;
+      --accent-soft: rgba(20,125,98,.09);
+      --success: #147d62;
+      --shadow: 0 16px 35px rgba(25,47,39,.08);
+      --font: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+      --display: 'Manrope', 'Inter', 'Segoe UI Variable', system-ui, sans-serif;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #08110e;
+      --surface: #0f1c17;
+      --surface-soft: #14241d;
+      --line: #283b33;
+      --line-strong: #385047;
+      --text: #edf6f1;
+      --muted: #a2b3aa;
+      --muted-2: #8fa198;
+      --accent: #69ddb0;
+      --accent-hover: #8be8c3;
+      --accent-ink: #082019;
+      --accent-soft: rgba(105,221,176,.10);
+      --success: #69ddb0;
+      --shadow: 0 18px 42px rgba(0,0,0,.26);
+    }
+
+    * { margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; background: var(--page); }
+    body {
+      min-height: 100vh;
+      background: var(--page);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(34rem 22rem at 87% 8%, rgba(105,221,176,.10), transparent 70%),
+        radial-gradient(28rem 19rem at 4% 65%, rgba(105,221,176,.07), transparent 70%);
+    }
+
+    a { text-decoration: none; color: inherit; }
+    button, a { font: inherit; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 3px; }
+
+    .shell {
+      position: relative;
+      width: min(1180px, calc(100% - 64px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .site-header {
+      min-height: 82px;
+      padding-top: env(safe-area-inset-top);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      font-family: var(--display);
+      font-weight: 700;
+      letter-spacing: -.5px;
+      font-size: 18px;
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 11px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .brand-mark svg { width: 21px; height: 21px; }
+    .brand-name span { color: var(--accent); }
+    .header-actions { display: flex; align-items: center; gap: 6px; }
+    .nav-link {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 14px;
+      border-radius: 9px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      transition: .18s ease;
+    }
+    .nav-link:hover { color: var(--text); background: var(--accent-soft); }
+    .nav-link.admin { margin-left: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+    .nav-link.admin:hover { border-color: var(--line-strong); color: var(--accent); }
+
+    /* Hero */
+    main { position: relative; padding: 72px 0 64px; }
+    .hero { max-width: 860px; margin: 0 auto; text-align: center; }
+    .eyebrow {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.25px;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 20px auto 0;
+      max-width: 800px;
+      font-family: var(--display);
+      font-size: clamp(42px, 5vw, 68px);
+      font-weight: 700;
+      line-height: 1.06;
+      letter-spacing: -.035em;
+    }
+    h1 .accent { display: block; color: var(--accent); }
+    .lead { max-width: 650px; margin: 24px auto 0; color: var(--muted); font-size: 17px; line-height: 1.7; }
+
+    .hero-actions { margin-top: 34px; display: grid; justify-items: center; gap: 12px; }
+    .button {
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 23px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      font-size: 14px;
+      font-weight: 700;
+      transition: .18s ease;
+    }
+    .button svg { width: 18px; height: 18px; }
+    .button-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 4px 14px rgba(20,125,98,.20); }
+    .button-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 7px 20px rgba(20,125,98,.24); }
+    .admin-inline { color: var(--muted); font-size: 13px; }
+    .admin-inline a { color: var(--accent); font-weight: 700; }
+    .admin-inline a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+    /* Capabilities */
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 760px;
+      margin: 48px auto 0;
+      padding-top: 32px;
+      border-top: 1px solid var(--line);
+    }
+    .trust-item { padding: 0 24px; border-right: 1px solid var(--line); }
+    .trust-item:last-child { border-right: 0; }
+    .trust-item strong {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text);
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .trust-item strong svg { width: 17px; height: 17px; color: var(--accent); }
+    .trust-item span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
+
+    /* Portal */
+    .portal {
+      max-width: 940px;
+      margin: 52px auto 0;
+      border: 1px solid var(--line-strong);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .portal-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 17px 26px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-soft);
+    }
+    .portal-heading { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .25px; }
+    .exam-status { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .status-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--success); animation: status-pulse 2.4s ease-out infinite; }
+    @keyframes status-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(20,125,98,.34); }
+      70% { box-shadow: 0 0 0 7px rgba(20,125,98,0); }
+      100% { box-shadow: 0 0 0 0 rgba(20,125,98,0); }
+    }
+    .exam-status-copy { min-width: 0; text-align: right; line-height: 1.25; }
+    .exam-status-label { display: block; color: var(--success); font-size: 9px; font-weight: 850; letter-spacing: 1px; text-transform: uppercase; }
+    .exam-status-title { display: block; margin-top: 2px; color: var(--text); font-size: 12px; font-weight: 700; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .exam-status.inactive .status-dot { background: var(--muted-2); animation: none; box-shadow: none; }
+    .exam-status.inactive .exam-status-label { color: var(--muted); }
+    .exam-status.inactive .exam-status-title { color: var(--muted); font-weight: 500; }
+
+    .portal-body { display: grid; grid-template-columns: 1fr 1fr; }
+    .portal-option {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      padding: 32px 28px;
+      transition: .18s ease;
+    }
+    .portal-option:first-child { border-right: 1px solid var(--line); }
+    .portal-option:hover { background: var(--accent-soft); }
+    .portal-icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .portal-icon svg { width: 23px; height: 23px; }
+    .portal-copy { min-width: 0; text-align: left; }
+    .portal-copy strong { display: block; font-family: var(--display); font-size: 17px; font-weight: 700; color: var(--text); }
+    .portal-copy span { display: block; margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .portal-copy .portal-cta { margin-top: 9px; color: var(--accent); font-size: 12px; font-weight: 750; }
+    .portal-arrow { margin-left: auto; align-self: center; display: grid; place-items: center; color: var(--muted-2); transition: .18s ease; }
+    .portal-arrow svg { width: 21px; height: 21px; }
+    .portal-option:hover .portal-arrow { color: var(--accent); transform: translateX(3px); }
+
+    /* Research Citation */
+    .citation-card {
+      max-width: 940px;
+      margin: 28px auto 0;
+      padding: 22px 26px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+    .citation-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+    .citation-title {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .citation-note {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    .citation-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 16px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    .citation-text {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .citation-text a {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .citation-text a:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .copy-citation-btn {
+      flex: 0 0 auto;
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 13px;
+      border: 1px solid var(--line-strong);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+    .copy-citation-btn svg { width: 14px; height: 14px; color: var(--accent); }
+    .copy-citation-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .copy-citation-btn.copied { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .copy-citation-btn.copied svg { color: var(--accent-ink); }
+
+    /* Footer */
+    footer { position: relative; padding: 28px 0 calc(28px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+    .footer-row { color: var(--muted); font-size: 12px; text-align: center; }
+    .footer-row strong { color: var(--text); font-weight: 700; }
+
+    @media (max-width: 768px) {
+      .shell { width: min(calc(100% - 40px - env(safe-area-inset-left) - env(safe-area-inset-right)), 1180px); }
+      .site-header { min-height: 74px; }
+      main { padding-top: 54px; }
+      h1 { font-size: clamp(40px, 9vw, 56px); }
+      .lead { font-size: 16px; }
+      .trust-row { margin-top: 40px; display: flex; flex-direction: column; gap: 22px; border-top: 0; padding-top: 0; }
+      .trust-item { border-right: 0; padding: 0; }
+      .portal { margin-top: 44px; }
+      .portal-body { grid-template-columns: 1fr; }
+      .portal-option:first-child { border-right: 0; border-bottom: 1px solid var(--line); }
+      .portal-bar { align-items: flex-start; padding: 16px 20px; }
+      .exam-status-copy { text-align: right; }
+      .citation-box { flex-direction: column; align-items: flex-start; }
+      .copy-citation-btn { width: 100%; justify-content: center; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { width: min(calc(100% - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)), 1180px); }
+      .site-header { min-height: 66px; }
+      .header-actions { display: none; }
+      .brand-mark { width: 36px; height: 36px; }
+
+      /* Mobile: keep the gateway compact so workspace access appears earlier. */
+      main { padding: 32px 0 42px; }
+      .eyebrow { font-size: 10px; }
+      h1 {
+        margin-top: 13px;
+        max-width: 620px;
+        font-size: clamp(34px, 10vw, 44px);
+        line-height: 1.04;
+      }
+      .lead {
+        max-width: 560px;
+        margin-top: 16px;
+        font-size: 14.5px;
+        line-height: 1.58;
+      }
+      .hero-actions { margin-top: 22px; gap: 9px; }
+      .button-primary { width: 100%; max-width: 360px; }
+      .admin-inline { font-size: 12.5px; }
+
+      /* Mobile capabilities: intentional left alignment in compact, subtle cards. */
+      .trust-row {
+        margin-top: 26px;
+        gap: 9px;
+        max-width: 520px;
+      }
+      .trust-item {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: color-mix(in srgb, var(--surface) 72%, transparent);
+        text-align: left;
+      }
+      .trust-item strong {
+        justify-content: flex-start;
+        gap: 9px;
+        font-size: 13.5px;
+      }
+      .trust-item strong svg { width: 16px; height: 16px; }
+      .trust-item span {
+        margin-top: 3px;
+        padding-left: 25px;
+        text-align: left;
+        font-size: 11.5px;
+        line-height: 1.4;
+      }
+
+      .portal { margin-top: 26px; border-radius: 14px; }
+      .portal-bar { flex-direction: column; gap: 10px; }
+      .exam-status-copy { text-align: left; }
+      .exam-status-title { max-width: calc(100vw - 76px); }
+      .portal-option { padding: 23px 20px; gap: 14px; }
+      .portal-icon { width: 43px; height: 43px; }
+      .portal-arrow { margin-left: 4px; }
+
+      .citation-card { margin-top: 20px; padding: 18px 16px; border-radius: 14px; }
+      .citation-text { font-size: 12.5px; }
+    }
+
+    @media (pointer: coarse) {
+      .nav-link, .button, .portal-option, .copy-citation-btn { min-height: 44px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+  <base target="_blank">
+</head>
+<body>
+  <header class="shell site-header">
+    <a class="brand" href="<?= webAppUrl ?>" target="_top" aria-label="Doctor Proctor home">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v5a4 4 0 0 0 8 0V4"/><path d="M6 4h4M14 4h4M12 13v2a4 4 0 0 0 4 4h1"/><circle cx="19" cy="19" r="2"/></svg></span>
+      <span class="brand-name">Doctor <span>Proctor</span></span>
+    </a>
+    <nav class="header-actions" aria-label="Portal navigation">
+      <a class="nav-link" href="<?= webAppUrl ?>?page=exam" target="_top">Student portal</a>
+      <a class="nav-link admin" href="<?= webAppUrl ?>?page=admin" target="_top">Administrator</a>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="home-title">
+      <div class="eyebrow">Secure online assessment</div>
+      <h1 id="home-title">Run better exams.<span class="accent">Review with confidence.</span></h1>
+      <p class="lead">Create secure assessments, automate grading, and review every response from one focused workspace.</p>
+
+      <div class="hero-actions">
+        <a class="button button-primary" href="<?= webAppUrl ?>?page=exam" target="_top">Enter student portal <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>
+        <div class="admin-inline">Administrator? <a href="<?= webAppUrl ?>?page=admin" target="_top">Open workspace →</a></div>
+      </div>
+
+      <div class="trust-row" aria-label="Platform capabilities">
+        <div class="trust-item"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>Proctored</strong><span>Activity monitoring</span></div>
+        <div class="trust-item"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg>Automatically graded</strong><span>Objective and R questions</span></div>
+        <div class="trust-item"><strong><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/></svg>Reviewable</strong><span>Responses and grading history</span></div>
+      </div>
+    </section>
+
+    <section class="portal" aria-label="Doctor Proctor portal access">
+      <div class="portal-bar">
+        <div class="portal-heading">Choose your workspace</div>
+        <? if (hasActiveExam) { ?>
+        <div class="exam-status" aria-label="Active exam available">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="exam-status-copy"><span class="exam-status-label">Exam available</span><strong class="exam-status-title"><?= activeExamTitle ?></strong></span>
+        </div>
+        <? } else { ?>
+        <div class="exam-status inactive" aria-label="No active exam">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="exam-status-copy"><span class="exam-status-label">No active exam</span><span class="exam-status-title">Your instructor has not opened an assessment yet.</span></span>
+        </div>
+        <? } ?>
+      </div>
+
+      <div class="portal-body">
+        <a class="portal-option" href="<?= webAppUrl ?>?page=exam" target="_top">
+          <span class="portal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 9-5 9 5-9 5-9-5Z"/><path d="m7 13.2.5 4.3c2.5 1.8 6.5 1.8 9 0l.5-4.3"/></svg></span>
+          <span class="portal-copy">
+            <strong>Student portal</strong>
+            <? if (hasActiveExam) { ?>
+            <span><strong style="display:inline;font-family:inherit;font-size:inherit;"><?= activeExamTitle ?></strong> is ready to begin.</span>
+            <span class="portal-cta">Enter exam →</span>
+            <? } else { ?>
+            <span>Enter your details when your instructor opens an assessment.</span>
+            <span class="portal-cta">Open student portal →</span>
+            <? } ?>
+          </span>
+          <span class="portal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+        </a>
+
+        <a class="portal-option" href="<?= webAppUrl ?>?page=admin" target="_top">
+          <span class="portal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M18 8h3M19.5 6.5v3"/></svg></span>
+          <span class="portal-copy"><strong>Admin workspace</strong><span>Create exams, monitor sessions, and review responses.</span><span class="portal-cta">Open administration →</span></span>
+          <span class="portal-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="citation-card" aria-labelledby="citation-heading">
+      <div class="citation-header">
+        <div>
+          <h2 id="citation-heading" class="citation-title">Cite this software</h2>
+          <p class="citation-note">Using Doctor Proctor for academic research or data collection? Please cite:</p>
+        </div>
+      </div>
+      <div class="citation-box">
+        <p class="citation-text">
+          Bagchi, D. (2026). <em>Doctor Proctor: Software for data collection</em> [Computer software]. Zenodo.
+          <a href="https://doi.org/10.5281/zenodo.24419500" target="_blank" rel="noopener noreferrer">https://doi.org/10.5281/zenodo.24419500</a>
+        </p>
+        <button type="button" id="copy-citation-btn" class="copy-citation-btn" aria-label="Copy citation to clipboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>Copy citation</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-row"><strong>Doctor Proctor</strong> · Secure online assessment</div>
+  </footer>
+
+  <script>
+    (function () {
+      if (window.matchMedia) {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        var sync = function () {
+          try {
+            var preference = localStorage.getItem('doctor-proctor.theme') || 'system';
+            if (preference !== 'system') return;
+            document.documentElement.dataset.theme = mq.matches ? 'dark' : 'light';
+          } catch (e) {}
+        };
+        if (mq.addEventListener) mq.addEventListener('change', sync);
+      }
+
+      var copyBtn = document.getElementById('copy-citation-btn');
+      if (copyBtn) {
+        var citationPlain = 'Bagchi, D. (2026). Doctor Proctor: Software for data collection [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.24419500';
+        var label = copyBtn.querySelector('span');
+        var resetTimer;
+
+        var showCopied = function () {
+          copyBtn.classList.add('copied');
+          if (label) label.textContent = 'Copied';
+          clearTimeout(resetTimer);
+          resetTimer = setTimeout(function () {
+            copyBtn.classList.remove('copied');
+            if (label) label.textContent = 'Copy citation';
+          }, 2000);
+        };
+
+        copyBtn.addEventListener('click', function () {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(citationPlain).then(showCopied).catch(function () {
+              fallbackCopy(citationPlain, showCopied);
+            });
+          } else {
+            fallbackCopy(citationPlain, showCopied);
+          }
+        });
+
+        function fallbackCopy(text, onSuccess) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            if (document.execCommand('copy')) onSuccess();
+          } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
