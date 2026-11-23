@@ -28,7 +28,7 @@ You do not need to copy-paste any code manually. The entire application is bundl
 
 ### Video Walkthrough
 Watch the step-by-step setup and usage guide here:
-* **[Watch the Setup & Usage Tutorial]([[PASTE_YOUR_VIDEO_LINK_HERE]](https://youtu.be/UoOlAqJmkEw))**
+* **[Watch the Setup & Usage Tutorial][[(https://youtu.be/UoOlAqJmkEw)]]**
 ---
 
 ## Key Features
